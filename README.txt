@@ -12,6 +12,8 @@ Changes made:
     - now the node that verifies a transaction is accredicted the transaction fee and block reward (in processUnverifiedTx())
     - added lock_time condition to processUnverifiedTx() -> if lock_time is >= chain length, the Transaction is verified, else not
     - added malleabilityAttack() function that changes the public key of a randomly selected unverified transaction
+- block.py
+    - added reward and transaction fee details block in return (in asTx())
 
 Instructions:
 - to alter the transactions modify the transactions in txGenerator.py
