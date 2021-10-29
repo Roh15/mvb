@@ -129,7 +129,7 @@ def generateTransactionList(users, outFilename):
     print(buildJsonTransaction(tx14), file=f)
 
     tx15 = generateTransaction([users[2]], [tx8.number, tx13.number],
-                               [users[2], users[0]], [10, 20], [15, 15], False)  # Steve is paying Bob 15
+                               [users[2], users[0]], [10, 20], [15, 10], False)  # Steve is paying Bob 15
     print(buildJsonTransaction(tx15)[:-1], file=f)
 
     f.write("]")
@@ -163,12 +163,15 @@ def generateTransaction(sUsers, sTxs, rUsers, valuesSent, valuesReceived, genesi
         user = User("Genesis")
         user.vk = rUsers[0].vk
         signature = generateSignature(json.dumps(input), json.dumps(output), user)
+
     else:
         signature = generateSignature(json.dumps(input), json.dumps(output), sUsers[0])
     concatSig = signature.signature + signature.message
     number = generate_hash(
         [json.dumps(input).encode('utf-8'), json.dumps(output).encode('utf-8'), concatSig]
     )
+
+    
 
     # print(output)
     # print(str(signature))

@@ -4,16 +4,17 @@ from Block import Block
 import copy
 
 class Chain:
-    def __init__(self, genesisBlock: Block):
+    def __init__(self, genesisBlock: Block, name):
         self.blocks = [genesisBlock]
         self.unspentCoin2BlockIdx = {}
+        self.node_name = name
         for output in genesisBlock.tx.output:
             key = generate_hash([genesisBlock.tx.number.encode("utf-8"),output['pubkey'].encode("utf-8")])
             self.unspentCoin2BlockIdx[key] = 0
 
     def addTx(self, tx: Transaction):
         lastBlockHash = self.blocks[len(self.blocks) - 1].hash()
-        newBlock = Block(tx, lastBlockHash)
+        newBlock = Block(tx, lastBlockHash, self.node_name)
         self.unspentCoin2BlockIdx = Chain.validateBlock(self.blocks, newBlock, self.unspentCoin2BlockIdx)
         self.blocks.append(newBlock)
         return True
@@ -38,7 +39,6 @@ class Chain:
             claimedTxOuputs = claimedBlock.tx.output
             foundOutput = False
             for output in claimedTxOuputs:
-                print()
                 if(output['pubkey'] == nextTxInput['output']['pubkey'] and output['value'] == nextTxInput['output']['value']):
                     foundOutput = True
             if(not foundOutput):

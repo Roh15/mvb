@@ -11,6 +11,7 @@ class Transaction:
         self.number = tx['number']
         self.output = tx['output']
         self.sig = tx['sig']
+        self.tx_fee = 0
         self.validate()
 
     def netTx(self):
@@ -49,7 +50,16 @@ class Transaction:
         res = self.netTx()
         for val in res.values():
             totalInOut += val
-        if totalInOut != 0:
+
+        # changes made in <Task 1>
+        # original:
+        # if totalInOut != 0:
+        #     raise Exception
+        if totalInOut > 0: # more received than sent
             raise Exception
+        else:
+            self.tx_fee = -totalInOut
+        # end of changes
+
         vk = VerifyKey(self.input[0]['output']['pubkey'], encoder=HexEncoder)
         vk.verify(self.sig, encoder=HexEncoder)

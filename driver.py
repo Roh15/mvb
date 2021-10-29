@@ -24,7 +24,7 @@ class HonestNode(threading.Thread):
         self.unverifiableTx = set()
         self.txInChain = set()
         # each node holds their own chain
-        self.chain = Chain(genesisBlock)
+        self.chain = Chain(genesisBlock, name)
 
     def run(self):
         # target function of the thread class
@@ -64,7 +64,7 @@ class HonestNode(threading.Thread):
                     self.unverifiableTx = set()
                     self.broadcastChain()
                 except:
-                    print(unverifiedTxNum + "is unverifiable")
+                    print(unverifiedTxNum + " is unverifiable")
                     self.unverifiableTx.add(unverifiedTxNum)
                     break
 
@@ -106,7 +106,7 @@ class MaliciousNode(threading.Thread):
         # Each Node has a Queue to track incoming chains from others
         self.q = queue.Queue()
         # each node holds their own chain
-        self.chain = Chain(genesisBlock)
+        self.chain = Chain(genesisBlock, name)
         self.badBlocks = [RandomBlock, MissingNonceBlock, MissingPowBlock, MissingPrevBlock, MissingTxBlock]
 
     def run(self):
@@ -260,10 +260,10 @@ if __name__ == "__main__":
         exit(0)
     # get data
     file_name = sys.argv[1]
-    genesisBlock = Block(setupTxs(file_name), "")
+    genesisBlock = Block(setupTxs(file_name), "", "Genesis")
     with open(file_name) as json_file:
         txs = json.loads(json_file.read())
-    NUM_HONEST_NODES = 5
-    NUM_MALICIOUS_NODES = 1
+    NUM_HONEST_NODES = 6
+    NUM_MALICIOUS_NODES = 0
     driver(txs, NUM_HONEST_NODES,NUM_MALICIOUS_NODES, genesisBlock)
 
