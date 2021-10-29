@@ -1,3 +1,6 @@
+# Rohin Nanavati 201801108
+# Shivani Nandani 201801076
+
 from Block import Block
 import threading
 import time
@@ -13,6 +16,9 @@ import queue
 import copy
 import time
 import random
+from txGenerator import generate_hash, generateSignature, User
+import string
+
 class HonestNode(threading.Thread):
     def __init__(self, name, genesisBlock):
         threading.Thread.__init__(self)
@@ -58,7 +64,7 @@ class HonestNode(threading.Thread):
                     print(unverifiedTxNum + " is not well formatted")
                     # lets see if we got new chains from our neighbors
                     break
-                if int(tx.lock_time) >= len(self.chain.blocks):
+                if int(tx.lock_time) <= len(self.chain.blocks):
                     try:
                         self.chain.addTx(tx)
                         self.txInChain.add(tx.number)
@@ -143,6 +149,10 @@ class MaliciousNode(threading.Thread):
                 badBlockClass = random.choice(self.badBlocks)
                 blocks.append(badBlockClass())
             self.broadcastChain(newChain)
+            # malleable attack (10% chance)
+            probs = random.uniform(0,1)
+            if probs < 0.1:
+                self.malleableAttack()
 
     def broadcastChain(self,chain):
         print(self.name + " broadcasting chain ")
@@ -150,6 +160,22 @@ class MaliciousNode(threading.Thread):
         for nodeKey, node in nodes.items():
             if nodeKey != self.name:
                 node.sendChain(chain)
+
+    def malleableAttack(self):
+        global unverifiedTxs
+        listOfKeys = list(unverifiedTxs.keys())
+        victimTxID = random.randint(0,len(listOfKeys))
+        victimTx = unverifiedTxs[listOfKeys[victimTxID]]
+        attacker = User('attack58')
+        signature = generateSignature(json.dumps(victimTx['input']), json.dumps(victimTx['output']), attacker)
+        newSignature = signature.signature + signature.message
+        victimTx['input'][0]['output']['pubkey'] = str(attacker.vk)
+        newTxNumber = generate_hash(
+            [json.dumps(victimTx['input']).encode('utf-8'), json.dumps(victimTx['output']).encode('utf-8'), newSignature])
+        victimTx['number'] = newTxNumber
+        victimTx['sig'] = newSignature.decode('utf-8')
+        unverifiedTxs[newTxNumber] = victimTx
+        print(listOfKeys[victimTxID] + " has been changed to " + newTxNumber)
 
 def generate_nonce(length):
     """Generate pseudorandom number."""
@@ -267,6 +293,6 @@ if __name__ == "__main__":
     with open(file_name) as json_file:
         txs = json.loads(json_file.read())
     NUM_HONEST_NODES = 5
-    NUM_MALICIOUS_NODES = 1
+    NUM_MALICIOUS_NODES = 0
     driver(txs, NUM_HONEST_NODES,NUM_MALICIOUS_NODES, genesisBlock)
 

@@ -1,3 +1,6 @@
+# Rohin Nanavati 201801108
+# Shivani Nandani 201801076
+
 import hashlib
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
@@ -74,7 +77,7 @@ def generateTransactionList(users, outFilename):
     print(buildJsonTransaction(malTx1), file=f)
 
     tx4 = generateTransaction([users[0]], [tx2.number],
-                              [users[0], users[5]], [40], [25, 15], False)  # Bob is paying John 15
+                              [users[0], users[5]], [40], [25, 15], False, lock_time=0)  # Bob is paying John 15
     print(buildJsonTransaction(tx4), file=f)
 
     tx5 = generateTransaction([users[1]], [tx1.number],
@@ -192,9 +195,10 @@ def buildJsonTransaction(tx):
     # print(str(tx.input)[1:-1])
     # print(str(tx.output)[1:-1])
     # print(str(tx.sig))
-    fullTx = '{"number":"' + str(tx.number) + '", "input": [' + str(
-        json.dumps(tx.input)[1:-1]) + '], "output": [' + str(json.dumps(tx.output)[1:-1]) + '], "sig": "' + str(tx.sig) \
-        + ', "lock_time": "' + str(tx.lock_time) + '"},'
+    # if tx.lock_time == 0:
+    #     fullTx = '{"number":"' + str(tx.number) + '", "input": [' + str(json.dumps(tx.input)[1:-1]) + '], "output": [' + str(json.dumps(tx.output)[1:-1]) + '], "sig": "' + str(tx.sig) + '"},'
+    # else:
+    fullTx = '{"number":"' + str(tx.number) + '", "input": [' + str(json.dumps(tx.input)[1:-1]) + '], "output": [' + str(json.dumps(tx.output)[1:-1]) + '], "sig": "' + str(tx.sig) + '", "lock_time": "' + str(tx.lock_time) + '"},'
     return fullTx
 
 

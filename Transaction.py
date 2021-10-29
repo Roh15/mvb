@@ -1,3 +1,6 @@
+# Rohin Nanavati 201801108
+# Shivani Nandani 201801076
+
 from nacl.signing import VerifyKey
 from nacl.encoding import HexEncoder
 from txGenerator import generate_hash, generateSignature
@@ -64,4 +67,8 @@ class Transaction:
         # end of changes
 
         vk = VerifyKey(self.input[0]['output']['pubkey'], encoder=HexEncoder)
-        vk.verify(self.sig, encoder=HexEncoder)
+        try:
+            vk.verify(self.sig, encoder=HexEncoder)
+        except:
+            print('\n\n' + self.number + ': Signature is invalid (malleable attack detected\n\n')
+            raise Exception

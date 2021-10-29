@@ -1,3 +1,6 @@
+# Rohin Nanavati 201801108
+# Shivani Nandani 201801076
+
 from txGenerator import generate_hash
 from Transaction import Transaction
 from Block import Block
