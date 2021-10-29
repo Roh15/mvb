@@ -5,13 +5,14 @@ import json
 
 
 class Transaction:
-    def __init__(self, tx):
+    def __init__(self, tx, node_name: None):
         # print("creating tx from " + str(tx))
         self.input = tx['input']
         self.number = tx['number']
         self.output = tx['output']
         self.sig = tx['sig']
         self.tx_fee = 0
+        self.miner = node_name
         self.lock_time = tx['lock_time']
         self.validate()
 
@@ -43,8 +44,7 @@ class Transaction:
         elif not self.number:
             raise Exception
         hexHash = generate_hash(
-            [json.dumps(self.input).encode(
-                'utf-8'), json.dumps(self.output).encode('utf-8'), self.sig.encode('utf-8')]
+            [json.dumps(self.input).encode('utf-8'), json.dumps(self.output).encode('utf-8'), self.sig.encode('utf-8')]
         )
         if self.number != hexHash:
             raise Exception
@@ -57,7 +57,7 @@ class Transaction:
         # original:
         # if totalInOut != 0:
         #     raise Exception
-        if totalInOut > 0:  # more received than sent
+        if totalInOut > 0: # more received than sent
             raise Exception
         else:
             self.tx_fee = -totalInOut
