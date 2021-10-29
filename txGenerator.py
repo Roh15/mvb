@@ -13,11 +13,12 @@ class User:
 
 
 class Transaction:
-    def __init__(self, input, number, output, sig):
+    def __init__(self, input, number, output, sig, lock_time=0):
         self.input = input
         self.number = number
         self.output = output
         self.sig = sig
+        self.lock_time = lock_time
 
 
 # TODO fix
@@ -85,7 +86,7 @@ def generateTransactionList(users, outFilename):
     print(buildJsonTransaction(tx6), file=f)
 
     malTx2 = generateTransaction([users[6]], ['0'],
-                                   [users[6], users[7]], [10], [5, 5], False)  # BAD TX: Invalid input transaction number
+                                 [users[6], users[7]], [10], [5, 5], False)  # BAD TX: Invalid input transaction number
     print(buildJsonTransaction(malTx2), file=f)
 
     tx7 = generateTransaction([users[0]], [tx4.number],
@@ -137,7 +138,7 @@ def generateTransactionList(users, outFilename):
     return genesisBlock
 
 
-def generateTransaction(sUsers, sTxs, rUsers, valuesSent, valuesReceived, genesis):
+def generateTransaction(sUsers, sTxs, rUsers, valuesSent, valuesReceived, genesis, lock_time=0):
     # generate input
     input = []
     index = 0
@@ -153,7 +154,8 @@ def generateTransaction(sUsers, sTxs, rUsers, valuesSent, valuesReceived, genesi
     output = []
     index = 0
     for r in rUsers:
-        json_temp = '{"value": ' + str(valuesReceived[index]) + ', "pubkey": "' + str(r.vk) + '"}'
+        json_temp = '{"value": ' + \
+            str(valuesReceived[index]) + ', "pubkey": "' + str(r.vk) + '"}'
         index += 1
         output.append(json.loads(json_temp))
 
@@ -162,21 +164,22 @@ def generateTransaction(sUsers, sTxs, rUsers, valuesSent, valuesReceived, genesi
         # generates an invalid signature, can also be used for testing
         user = User("Genesis")
         user.vk = rUsers[0].vk
-        signature = generateSignature(json.dumps(input), json.dumps(output), user)
+        signature = generateSignature(
+            json.dumps(input), json.dumps(output), user)
 
     else:
-        signature = generateSignature(json.dumps(input), json.dumps(output), sUsers[0])
+        signature = generateSignature(json.dumps(
+            input), json.dumps(output), sUsers[0])
     concatSig = signature.signature + signature.message
     number = generate_hash(
-        [json.dumps(input).encode('utf-8'), json.dumps(output).encode('utf-8'), concatSig]
+        [json.dumps(input).encode('utf-8'),
+         json.dumps(output).encode('utf-8'), concatSig]
     )
-
-    
 
     # print(output)
     # print(str(signature))
 
-    return Transaction(input, number, output, concatSig.decode('utf-8'))
+    return Transaction(input, number, output, concatSig.decode('utf-8'), lock_time)
 
 
 def generateSignature(input, output, user):
@@ -193,12 +196,13 @@ def buildJsonTransaction(tx):
     # print(str(tx.sig))
     fullTx = '{"number":"' + str(tx.number) + '", "input": [' + str(
         json.dumps(tx.input)[1:-1]) + '], "output": [' + str(json.dumps(tx.output)[1:-1]) + '], "sig": "' + str(tx.sig) \
-             + '"},'
+        + ', "lock_time": "' + str(tx.lock_time) + '"},'
     return fullTx
 
 
 def main(file_name):
-    names = ['Bob', 'Alice', 'Steve', 'Phil', 'Barbara', 'John', 'Stacy', 'Candice']
+    names = ['Bob', 'Alice', 'Steve', 'Phil',
+             'Barbara', 'John', 'Stacy', 'Candice']
     users = []
 
     # make user objects from list of names and append to list of users

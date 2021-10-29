@@ -13,6 +13,8 @@ import queue
 import copy
 import time
 import random
+
+
 class HonestNode(threading.Thread):
     def __init__(self, name, genesisBlock):
         threading.Thread.__init__(self)
@@ -58,15 +60,16 @@ class HonestNode(threading.Thread):
                     print(unverifiedTxNum + " is not well formatted")
                     # lets see if we got new chains from our neighbors
                     break
-                try:
-                    self.chain.addTx(tx)
-                    self.txInChain.add(tx.number)
-                    self.unverifiableTx = set()
-                    self.broadcastChain()
-                except:
-                    print(unverifiedTxNum + " is unverifiable")
-                    self.unverifiableTx.add(unverifiedTxNum)
-                    break
+                if int(tx.lock_time) >= len(self.chain.blocks):
+                    try:
+                        self.chain.addTx(tx)
+                        self.txInChain.add(tx.number)
+                        self.unverifiableTx = set()
+                        self.broadcastChain()
+                    except:
+                        print(unverifiedTxNum + " is unverifiable")
+                        self.unverifiableTx.add(unverifiedTxNum)
+                        break
 
     def sendChain(self, chain):
         self.q.put(chain)
@@ -89,7 +92,7 @@ class HonestNode(threading.Thread):
         for nodeKey, node in nodes.items():
             if nodeKey != self.name:
                 node.sendChain(self.chain)
-    
+
     def print(self):
         with open('output/'+self.name+".json", 'w') as outfile:
             outfile.write(self.chain.asString(asTx=True))
@@ -99,6 +102,8 @@ class HonestNode(threading.Thread):
         with open('output/'+self.name+"'s_chain"+".json", 'w') as outfile:
             outfile.write(self.chain.asString())
             outfile.close()
+
+
 class MaliciousNode(threading.Thread):
     def __init__(self, name, genesisBlock):
         threading.Thread.__init__(self)
@@ -107,7 +112,8 @@ class MaliciousNode(threading.Thread):
         self.q = queue.Queue()
         # each node holds their own chain
         self.chain = Chain(genesisBlock, name)
-        self.badBlocks = [RandomBlock, MissingNonceBlock, MissingPowBlock, MissingPrevBlock, MissingTxBlock]
+        self.badBlocks = [RandomBlock, MissingNonceBlock,
+                          MissingPowBlock, MissingPrevBlock, MissingTxBlock]
 
     def run(self):
         # target function of the thread class
@@ -134,23 +140,25 @@ class MaliciousNode(threading.Thread):
         newChain = self.q.get()
         if len(newChain.blocks) >= len(self.chain.blocks):
             newChain = copy.deepcopy(newChain)
-            blocks  = newChain.blocks
+            blocks = newChain.blocks
             numBlocksToAdd = 3
             for i in range(numBlocksToAdd):
                 badBlockClass = random.choice(self.badBlocks)
                 blocks.append(badBlockClass())
             self.broadcastChain(newChain)
 
-    def broadcastChain(self,chain):
+    def broadcastChain(self, chain):
         print(self.name + " broadcasting chain ")
         global nodes
         for nodeKey, node in nodes.items():
             if nodeKey != self.name:
                 node.sendChain(chain)
 
+
 def generate_nonce(length):
     """Generate pseudorandom number."""
     return ''.join([str(random.randint(0, 9)) for i in range(length)])
+
 
 class RandomBlock():
     def __init__(self):
@@ -159,22 +167,27 @@ class RandomBlock():
         self.nonce = generate_nonce(64)
         self.pow = generate_nonce(128)
 
+
 class MissingTxBlock():
     def __init__(self):
         self.prev = generate_nonce(64)
         self.nonce = generate_nonce(64)
         self.pow = generate_nonce(128)
+
+
 class MissingPrevBlock():
     def __init__(self):
         self.tx = generate_nonce(64)
         self.nonce = generate_nonce(64)
         self.pow = generate_nonce(128)
 
+
 class MissingNonceBlock():
     def __init__(self):
         self.tx = generate_nonce(64)
         self.prev = generate_nonce(64)
         self.pow = generate_nonce(128)
+
 
 class MissingPowBlock():
     def __init__(self):
@@ -183,21 +196,24 @@ class MissingPowBlock():
         self.nonce = generate_nonce(64)
         self.pow = generate_nonce(128)
 
+
 # these variables are globally accessible to all nodes
 stop_threads = False
 nodes = {}
 unverifiedTxs = {}
 STOP_LENGTH_CHAIN = 16
 
+
 def driver(txs, numHonestNodes, numMaliciousNodes, genesisBlock):
-    honest_nodes_left_to_finish = startNodes(numHonestNodes, numMaliciousNodes, genesisBlock)
+    honest_nodes_left_to_finish = startNodes(
+        numHonestNodes, numMaliciousNodes, genesisBlock)
     # add transactions, which causes nodes to process them
     for tx in txs:
         randomSleepTime = random.uniform(0, 1)
         time.sleep(randomSleepTime)
         unverifiedTxs[tx['number']] = tx
     while True:
-        if(len(honest_nodes_left_to_finish) == 0 ):
+        if(len(honest_nodes_left_to_finish) == 0):
             # put in an order to stop all Nodes
             print("hello!")
             global stop_threads
@@ -226,8 +242,10 @@ def driver(txs, numHonestNodes, numMaliciousNodes, genesisBlock):
         node.join()
     print('all done!')
 
+
 def idxToKey(idx):
     return 'Node' + str(idx)
+
 
 def startNodes(numHonest, numMalicious, genesisBlock):
     global nodes
@@ -239,7 +257,7 @@ def startNodes(numHonest, numMalicious, genesisBlock):
         nodes[key] = HonestNode(key, genesisBlock)
         # Start it
         nodes[key].start()
-    
+
     for i in range(numMalicious):
         key = idxToKey(numHonest+i)
         # Create node in thread
@@ -251,6 +269,7 @@ def startNodes(numHonest, numMalicious, genesisBlock):
 
 def setupTxs(file_name):
     return txGenerator.main(file_name)
+
 
 if __name__ == "__main__":
     # create genesis block
@@ -265,5 +284,4 @@ if __name__ == "__main__":
         txs = json.loads(json_file.read())
     NUM_HONEST_NODES = 6
     NUM_MALICIOUS_NODES = 0
-    driver(txs, NUM_HONEST_NODES,NUM_MALICIOUS_NODES, genesisBlock)
-
+    driver(txs, NUM_HONEST_NODES, NUM_MALICIOUS_NODES, genesisBlock)
